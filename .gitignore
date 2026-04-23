@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Virtual Environments
+venv/
+env/
+.env/
+.venv/
+
+# Flask / App
+instance/
+.webassets-cache
+*.db
+*.sqlite3
+
+# Model artifacts
+model/trained_model.pkl
+model/scaler.pkl
+model/label_encoder.pkl
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Distribution
+dist/
+build/
+*.egg-info/

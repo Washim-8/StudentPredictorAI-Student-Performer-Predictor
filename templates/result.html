@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+{% block title %}Prediction Result — StudentPredictorAI{% endblock %}
+
+{% block head %}
+<style>
+/* ── LIGHT THEME CORE ── */
+body {
+    background: #f8f9fa !important;
+    /* Subtle mesh gradient for premium feel */
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(245, 158, 11, 0.05) 0px, transparent 50%) !important;
+    background-attachment: fixed !important;
+    color: #333 !important;
+}
+
+/* Navbar / Footer Overrides for Light Mode */
+.navbar {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03) !important;
+}
+.nav-brand, .nav-link:not(.nav-api) { color: #333 !important; }
+.nav-link:hover, .nav-link.active { background: rgba(99, 102, 241, 0.08) !important; color: #6366f1 !important; }
+.nav-toggle span { background: #333 !important; }
+
+.footer { 
+    background: white !important; 
+    border-top: 1px solid rgba(0,0,0,0.05) !important; 
+    color: #666 !important; 
+}
+.footer-brand .brand-text, .footer-links h4, .footer-tech h4 { color: #333 !important; }
+.footer-links a { color: #555 !important; }
+.footer-bottom { border-top: 1px solid rgba(0,0,0,0.05) !important; }
+
+/* ── GLASSMORPHISM DESIGN SYSTEM ── */
+.result-container {
+    padding: 4rem 0 6rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* Base Glass Card */
+.glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 24px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.04), 0 20px 48px rgba(0,0,0,0.04);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+}
+
+/* ── FLOATING HERO ELEMENT ── */
+.hero-badge-floating {
+    max-width: 540px;
+    margin: 0 auto 4rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    position: relative;
+    border-top: 6px solid #6366f1; /* Fallback */
+    animation: floatingSlideUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.hero-badge-floating:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.06), 0 30px 60px rgba(0,0,0,0.06);
+}
+
+/* Status Specific Styles */
+.status-high .hero-badge-floating { border-color: #10b981; border-width: 1px; border-top-width: 6px; box-shadow: 0 10px 40px rgba(16, 185, 129, 0.15), 0 20px 60px rgba(0,0,0,0.05); }
+.status-average .hero-badge-floating { border-color: #f59e0b; border-width: 1px; border-top-width: 6px; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.15), 0 20px 60px rgba(0,0,0,0.05); }
+.status-low .hero-badge-floating { border-color: #ef4444; border-width: 1px; border-top-width: 6px; box-shadow: 0 10px 40px rgba(239, 68, 68, 0.15), 0 20px 60px rgba(0,0,0,0.05); }
+
+.hero-icon {
+    font-size: 4.5rem;
+    margin-bottom: 1rem;
+    display: block;
+    line-height: 1;
+    animation: iconBounce 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) both 0.3s;
+}
+
+.hero-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+.status-high .hero-title { color: #10b981; }
+.status-average .hero-title { color: #f59e0b; }
+.status-low .hero-title { color: #ef4444; }
+
+.hero-subtitle {
+    font-size: 1rem;
+    color: #666;
+    font-weight: 500;
+}
+
+/* ── CIRCULAR GAUGE ── */
+.gauge-box {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gauge-svg-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+}
+
+.gauge-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.gauge-track {
+    fill: none;
+    stroke: rgba(0,0,0,0.05);
+    stroke-width: 12;
+}
+
+.gauge-progress {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 2.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.status-high .gauge-progress { stroke: #10b981; }
+.status-average .gauge-progress { stroke: #f59e0b; }
+.status-low .gauge-progress { stroke: #ef4444; }
+
+.gauge-content {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.gauge-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #333;
+}
+
+.gauge-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* ── INFORMATION CHIPS ── */
+.chips-section-title {
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    font-size: 1.6rem;
+    color: #333;
+}
+
+.chips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto 4rem;
+}
+
+.info-chip {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+}
+
+.info-chip-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-chip-label {
+    font-size: 0.8rem;
+    color: #777;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.info-chip-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #333;
+}
+
+/* Animated Pulsing Status Icons */
+.status-indicator {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.indicator-ring {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.indicator-ring svg {
+    width: 16px;
+    height: 16px;
+    color: white;
+    stroke-width: 3.5px;
+    position: relative;
+    z-index: 2;
+}
+
+.ring-pulse {
+    position: absolute;
+    inset: -6px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    opacity: 0;
+    animation: ringPulse 2s infinite cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.indicator-good { background: #10b981; color: #10b981; }
+.indicator-warn { background: #f59e0b; color: #f59e0b; }
+.indicator-bad  { background: #ef4444; color: #ef4444; }
+
+/* ── RECOMMENDATION CARD ── */
+.advice-card {
+    max-width: 800px;
+    margin: 0 auto 4rem;
+    padding: 2rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    border-left: 6px solid #6366f1;
+    opacity: 0;
+    animation: fadeSlideUp 0.6s ease forwards 1s;
+}
+
+.status-high .advice-card { border-left-color: #10b981; }
+.status-average .advice-card { border-left-color: #f59e0b; }
+.status-low .advice-card { border-left-color: #ef4444; }
+
+.advice-icon { font-size: 2.5rem; }
+.advice-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; margin-bottom: 0.5rem; }
+.advice-text { font-size: 1.1rem; line-height: 1.6; color: #555; margin: 0; }
+
+/* ── ACTIONS ── */
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    opacity: 0;
+    animation: fadeSlideUp 0.6s ease forwards 1.2s;
+}
+
+.btn-premium {
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-primary-gradient {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+    border: none;
+}
+
+.btn-primary-gradient:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(99, 102, 241, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-outline-glass {
+    background: white;
+    color: #333;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.btn-outline-glass:hover {
+    transform: translateY(-5px);
+    background: #fdfdfd;
+    border-color: rgba(0,0,0,0.2);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+}
+
+.btn-premium:active {
+    transform: translateY(-1px) scale(0.96);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* ── ANIMATIONS ── */
+@keyframes floatingSlideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes iconBounce {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+@keyframes ringPulse {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes popIn {
+    0% { transform: translateY(30px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Staggered load for chips */
+.chip-pop-1 { animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.4s; }
+.chip-pop-2 { animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.5s; }
+.chip-pop-3 { animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.6s; }
+.chip-pop-4 { animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.7s; }
+.chip-pop-5 { animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.8s; }
+.chip-pop-6 { animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.9s; }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .action-buttons { flex-direction: column; align-items: center; gap: 1rem; }
+    .hero-title { font-size: 1.8rem; }
+    .gauge-svg-container { width: 140px; height: 140px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-container status-{{ prediction | lower }}">
+    <div class="container">
+
+        <!-- 1. FLOATING HERO ELEMENT -->
+        <div class="glass-card hero-badge-floating">
+            <span class="hero-icon">
+                {% if prediction == "High" %}🏆{% elif prediction == "Average" %}📈{% else %}⚠️{% endif %}
+            </span>
+            <h1 class="hero-title">{{ prediction | upper }} PERFORMER</h1>
+            <p class="hero-subtitle">Machine Learning Analysis by <strong>{{ model_name }}</strong></p>
+
+            <!-- 2. CIRCULAR GAUGE -->
+            <div class="gauge-box">
+                <div class="gauge-svg-container">
+                    <svg viewBox="0 0 120 120" class="gauge-svg">
+                        <circle cx="60" cy="60" r="54" class="gauge-track" />
+                        <!-- Circumference = 2 * PI * 54 ≈ 339.29 -->
+                        <circle cx="60" cy="60" r="54" class="gauge-progress" 
+                                id="gauge-circle"
+                                stroke-dasharray="339.3" 
+                                stroke-dashoffset="339.3"
+                                data-target="{{ confidence }}" />
+                    </svg>
+                    <div class="gauge-content">
+                        <div class="gauge-value" id="confidence-val">0.0%</div>
+                        <div class="gauge-label">Confidence</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. INFORMATION CHIPS (Input Summary) -->
+        <h3 class="chips-section-title">Submitted Input Summary</h3>
+        <div class="chips-grid">
+            
+            {% set chip_idx = 1 %}
+            
+            <!-- Attendance -->
+            <div class="glass-card info-chip chip-pop-1">
+                <div class="info-chip-content">
+                    <span class="info-chip-label">Attendance</span>
+                    <span class="info-chip-value">{{ inputs.attendance }}%</span>
+                </div>
+                <div class="status-indicator">
+                    {% if inputs.attendance >= 75 %}
+                        <div class="indicator-ring indicator-good">
+                            <div class="ring-pulse"></div>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    {% elif inputs.attendance >= 60 %}
+                        <div class="indicator-ring indicator-warn">
+                            <div class="ring-pulse"></div>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                    {% else %}
+                        <div class="indicator-ring indicator-bad">
+                            <div class="ring-pulse"></div>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Internal Marks -->
+            <div class="glass-card info-chip chip-pop-2">
+                <div class="info-chip-content">
+                    <span class="info-chip-label">Internal Marks</span>
+                    <span class="info-chip-value">{{ inputs.internal_marks }} / 100</span>
+                </div>
+                <div class="status-indicator">
+                    {% if inputs.internal_marks >= 70 %}
+                        <div class="indicator-ring indicator-good"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></div>
+                    {% elif inputs.internal_marks >= 50 %}
+                        <div class="indicator-ring indicator-warn"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                    {% else %}
+                        <div class="indicator-ring indicator-bad"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Study Hours -->
+            <div class="glass-card info-chip chip-pop-3">
+                <div class="info-chip-content">
+                    <span class="info-chip-label">Study Hours</span>
+                    <span class="info-chip-value">{{ inputs.study_hours_per_day }}h / Day</span>
+                </div>
+                <div class="status-indicator">
+                    {% if inputs.study_hours_per_day >= 5 %}
+                        <div class="indicator-ring indicator-good"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></div>
+                    {% elif inputs.study_hours_per_day >= 3 %}
+                        <div class="indicator-ring indicator-warn"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                    {% else %}
+                        <div class="indicator-ring indicator-bad"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- CGPA -->
+            <div class="glass-card info-chip chip-pop-4">
+                <div class="info-chip-content">
+                    <span class="info-chip-label">Previous CGPA</span>
+                    <span class="info-chip-value">{{ inputs.previous_cgpa }}</span>
+                </div>
+                <div class="status-indicator">
+                    {% if inputs.previous_cgpa >= 7.5 %}
+                        <div class="indicator-ring indicator-good"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></div>
+                    {% elif inputs.previous_cgpa >= 5.5 %}
+                        <div class="indicator-ring indicator-warn"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                    {% else %}
+                        <div class="indicator-ring indicator-bad"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Assignments -->
+            <div class="glass-card info-chip chip-pop-5">
+                <div class="info-chip-content">
+                    <span class="info-chip-label">Assignments</span>
+                    <span class="info-chip-value">{{ inputs.assignments_completed | int }} / 10</span>
+                </div>
+                <div class="status-indicator">
+                    {% if inputs.assignments_completed >= 7 %}
+                        <div class="indicator-ring indicator-good"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></div>
+                    {% elif inputs.assignments_completed >= 4 %}
+                        <div class="indicator-ring indicator-warn"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                    {% else %}
+                        <div class="indicator-ring indicator-bad"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Extracurricular -->
+            <div class="glass-card info-chip chip-pop-6">
+                <div class="info-chip-content">
+                    <span class="info-chip-label">Extracurricular</span>
+                    <span class="info-chip-value">{{ "Active" if inputs.extracurricular == 1 else "Inactive" }}</span>
+                </div>
+                <div class="status-indicator">
+                    {% if inputs.extracurricular == 1 %}
+                        <div class="indicator-ring indicator-good"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></div>
+                    {% else %}
+                        <div class="indicator-ring indicator-warn"><div class="ring-pulse"></div><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. PERSONALIZED ADVICE -->
+        <div class="glass-card advice-card">
+            <div class="advice-icon">💡</div>
+            <div class="advice-content">
+                <h3 class="advice-title">Personalized Guidance</h3>
+                <p class="advice-text">{{ advice }}</p>
+            </div>
+        </div>
+
+        <!-- 5. ACTION BUTTONS -->
+        <div class="action-buttons">
+            <a href="{{ url_for('index') }}" class="btn-premium btn-primary-gradient">
+                🔮 Predict New Student
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn-premium btn-outline-glass">
+                📊 Analytics Dashboard
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const gauge = document.getElementById('gauge-circle');
+    const display = document.getElementById('confidence-val');
+    
+    if (gauge && display) {
+        const target = parseFloat(gauge.dataset.target);
+        const radius = 54;
+        const circumference = 2 * Math.PI * radius; // 339.292...
+        
+        // Initial state
+        gauge.style.strokeDasharray = `${circumference}`;
+        gauge.style.strokeDashoffset = `${circumference}`;
+        
+        // Animation using requestAnimationFrame for spring-like feel (simulated with easeOutBack-ish timing)
+        setTimeout(() => {
+            const offset = circumference - (target / 100) * circumference;
+            gauge.style.strokeDashoffset = offset;
+            
+            // Count animation
+            let start = null;
+            const duration = 2000;
+            
+            const animate = (timestamp) => {
+                if (!start) start = timestamp;
+                const progress = Math.min((timestamp - start) / duration, 1);
+                
+                // Spring physics approximation: easeOutElastic / easeOutBack
+                const elastic = 1 - Math.pow(1 - progress, 4); // Fast start, slow end
+                const current = (target * elastic).toFixed(1);
+                
+                display.innerText = `${current}%`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    display.innerText = `${target}%`;
+                }
+            };
+            requestAnimationFrame(animate);
+        }, 500);
+    }
+});
+</script>
+{% endblock %}
+

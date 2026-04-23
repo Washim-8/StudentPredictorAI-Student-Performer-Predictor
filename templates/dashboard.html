@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — StudentPredictorAI{% endblock %}
+
+{% block content %}
+<section class="dashboard-section" id="dashboard-section">
+    <div class="container">
+
+        <!-- Dashboard Header -->
+        <div class="dashboard-header" id="dashboard-header">
+            <h1 class="dashboard-title">📊 Analytics Dashboard</h1>
+            <p class="dashboard-subtitle">Real-time insights from <strong>{{ total }}</strong> student records</p>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="metric-grid" id="metric-grid">
+            <div class="metric-card metric-total" id="metric-total">
+                <div class="metric-icon">👥</div>
+                <div class="metric-info">
+                    <div class="metric-value" id="total-value">{{ total }}</div>
+                    <div class="metric-label">Total Students</div>
+                </div>
+                <div class="metric-trend">📈</div>
+            </div>
+
+            <div class="metric-card metric-high" id="metric-high">
+                <div class="metric-icon">🏆</div>
+                <div class="metric-info">
+                    <div class="metric-value" id="high-value">{{ pct_high }}%</div>
+                    <div class="metric-label">High Performers</div>
+                    <div class="metric-sub">{{ count_high }} students</div>
+                </div>
+            </div>
+
+            <div class="metric-card metric-avg" id="metric-avg">
+                <div class="metric-icon">📈</div>
+                <div class="metric-info">
+                    <div class="metric-value" id="avg-value">{{ pct_avg }}%</div>
+                    <div class="metric-label">Average Performers</div>
+                    <div class="metric-sub">{{ count_avg }} students</div>
+                </div>
+            </div>
+
+            <div class="metric-card metric-low" id="metric-low">
+                <div class="metric-icon">⚠️</div>
+                <div class="metric-info">
+                    <div class="metric-value" id="low-value">{{ pct_low }}%</div>
+                    <div class="metric-label">Low Performers</div>
+                    <div class="metric-sub">{{ count_low }} students</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid" id="charts-grid">
+
+            <!-- Bar Chart: Averages per group -->
+            <div class="chart-card" id="chart-bar-card">
+                <div class="chart-card-header">
+                    <h3>📊 Average Metrics by Performance Group</h3>
+                    <p class="chart-subtext">Attendance, Marks, Study Hours, and CGPA comparison</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="barChart" aria-label="Bar chart showing average metrics per performance group" role="img"></canvas>
+                </div>
+            </div>
+
+            <!-- Pie Chart: Class Distribution -->
+            <div class="chart-card chart-card-small" id="chart-pie-card">
+                <div class="chart-card-header">
+                    <h3>🥧 Performance Distribution</h3>
+                    <p class="chart-subtext">Proportion of each class</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="pieChart" aria-label="Pie chart showing performance class distribution" role="img"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CTA -->
+        <div class="dashboard-cta" id="dashboard-cta">
+            <a href="{{ url_for('index') }}" class="btn btn-predict" id="dashboard-predict-btn">
+                🔮 Make a Prediction
+            </a>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const groups   = {{ groups | safe }};
+const avgAttendance = {{ avg_attendance | safe }};
+const avgMarks   = {{ avg_marks | safe }};
+const avgStudy   = {{ avg_study | safe }};
+const avgCgpa    = {{ avg_cgpa | safe }};
+const pieLabels  = {{ pie_labels | safe }};
+const pieValues  = {{ pie_values | safe }};
+
+const colorMap = {
+    "High":    "#10b981",
+    "Average": "#f59e0b",
+    "Low":     "#ef4444"
+};
+const barColors = groups.map(g => colorMap[g] || "#6366f1");
+
+// ── Bar Chart ──────────────────────────────────────────────
+const barCtx = document.getElementById('barChart').getContext('2d');
+new Chart(barCtx, {
+    type: 'bar',
+    data: {
+        labels: groups,
+        datasets: [
+            {
+                label: 'Avg Attendance (%)',
+                data: avgAttendance,
+                backgroundColor: 'rgba(99,102,241,0.75)',
+                borderColor: 'rgba(99,102,241,1)',
+                borderWidth: 2,
+                borderRadius: 8,
+            },
+            {
+                label: 'Avg Internal Marks',
+                data: avgMarks,
+                backgroundColor: 'rgba(16,185,129,0.75)',
+                borderColor: 'rgba(16,185,129,1)',
+                borderWidth: 2,
+                borderRadius: 8,
+            },
+            {
+                label: 'Avg Study Hours',
+                data: avgStudy,
+                backgroundColor: 'rgba(245,158,11,0.75)',
+                borderColor: 'rgba(245,158,11,1)',
+                borderWidth: 2,
+                borderRadius: 8,
+            },
+            {
+                label: 'Avg CGPA',
+                data: avgCgpa,
+                backgroundColor: 'rgba(239,68,68,0.75)',
+                borderColor: 'rgba(239,68,68,1)',
+                borderWidth: 2,
+                borderRadius: 8,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        animation: { duration: 1000, easing: 'easeInOutQuart' },
+        plugins: {
+            legend: { position: 'top', labels: { color: '#475569', font: { family: 'Inter', size: 12, weight: '600' } } },
+            tooltip: { 
+                backgroundColor: '#ffffff', 
+                titleColor: '#0f172a', 
+                bodyColor: '#475569', 
+                borderColor: 'rgba(0,0,0,0.1)', 
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 6,
+                usePointStyle: true,
+                shadowColor: 'rgba(0,0,0,0.1)',
+                shadowBlur: 10
+            }
+        },
+        scales: {
+            x: { ticks: { color: '#64748b', font: { family: 'Inter', weight: '500' } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            y: { ticks: { color: '#64748b', font: { family: 'Inter', weight: '500' } }, grid: { color: 'rgba(0,0,0,0.05)' }, beginAtZero: true }
+        }
+    }
+});
+
+// ── Pie Chart ──────────────────────────────────────────────
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+        labels: pieLabels,
+        datasets: [{
+            data: pieValues,
+            backgroundColor: pieLabels.map(l => colorMap[l] || '#6366f1'),
+            borderColor: '#ffffff',
+            borderWidth: 4,
+            hoverOffset: 12
+        }]
+    },
+    options: {
+        responsive: true,
+        animation: { animateRotate: true, animateScale: true, duration: 1200 },
+        plugins: {
+            legend: { position: 'bottom', labels: { color: '#475569', font: { family: 'Inter', size: 13, weight: '600' }, padding: 20 } },
+            tooltip: { 
+                backgroundColor: '#ffffff', 
+                titleColor: '#0f172a', 
+                bodyColor: '#475569', 
+                borderColor: 'rgba(0,0,0,0.1)', 
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 6
+            }
+        },
+        cutout: '60%'
+    }
+});
+</script>
+{% endblock %}

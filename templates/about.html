@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}About — StudentPredictorAI{% endblock %}
+
+{% block content %}
+<section class="about-section" id="about-section">
+    <div class="container">
+        <div class="about-hero" id="about-hero">
+            <h1 class="about-title">About <span class="gradient-text">StudentPredictor AI</span></h1>
+            <p class="about-subtitle">A production-grade ML application predicting academic performance using state-of-the-art machine learning algorithms.</p>
+        </div>
+
+        <div class="about-grid" id="about-grid">
+            <div class="about-content" id="about-content">
+                <h2>🎯 Project Objective</h2>
+                <p>Student Performer Predictor is a machine learning web application that analyzes key academic indicators to predict whether a student is likely to be a <strong>High</strong>, <strong>Average</strong>, or <strong>Low</strong> performer.</p>
+                <p>The system trains on a dataset of 1,000 synthetic student records and evaluates four different ML models, automatically selecting the best-performing one for predictions.</p>
+
+                <h2>🧠 How It Works</h2>
+                <ol>
+                    <li>Student data is collected via an intuitive web form</li>
+                    <li>Input features are preprocessed (normalized, encoded)</li>
+                    <li>The best-trained ML model makes a prediction</li>
+                    <li>A confidence score and personalized advice are returned</li>
+                </ol>
+
+                <h2>📊 Models Compared</h2>
+                <ul>
+                    <li>Logistic Regression</li>
+                    <li>Decision Tree Classifier</li>
+                    <li>Random Forest Classifier ← <em>typically best</em></li>
+                    <li>Support Vector Classifier (SVC)</li>
+                </ul>
+            </div>
+
+            <div class="tech-stack-card" id="tech-stack-card">
+                <h3>🛠 Tech Stack</h3>
+                <table class="tech-table" aria-label="Technology stack">
+                    <thead>
+                        <tr><th>Layer</th><th>Technology</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Backend</td><td>Flask (Python)</td></tr>
+                        <tr><td>ML</td><td>scikit-learn</td></tr>
+                        <tr><td>Data</td><td>pandas, numpy</td></tr>
+                        <tr><td>Visualization</td><td>Chart.js, matplotlib</td></tr>
+                        <tr><td>Frontend</td><td>HTML5, CSS3, JS</td></tr>
+                        <tr><td>Model I/O</td><td>joblib</td></tr>
+                        <tr><td>Testing</td><td>pytest</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="api-preview" id="api-preview">
+                    <h4>⚡ API Endpoint</h4>
+                    <pre><code>POST /api/predict
+Content-Type: application/json
+
+{
+  "attendance": 80,
+  "internal_marks": 75,
+  "study_hours_per_day": 6,
+  "previous_cgpa": 8.5,
+  "assignments_completed": 8,
+  "extracurricular": 1
+}
+
+→ Response:
+{
+  "prediction": "High",
+  "confidence": 0.94,
+  "model": "RandomForestClassifier"
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-row" id="about-cta">
+            <a href="{{ url_for('index') }}" class="btn btn-predict" id="about-predict-btn">🔮 Try Prediction</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary" id="about-dashboard-btn">📊 View Dashboard</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

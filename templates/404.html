@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}404 Not Found — StudentPredictorAI{% endblock %}
+{% block content %}
+<section class="error-section" id="error-section">
+    <div class="container error-container">
+        <div class="error-code" id="error-code">404</div>
+        <h1 class="error-title">Page Not Found</h1>
+        <p class="error-text">The page you're looking for doesn't exist or has been moved.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-predict" id="error-home-btn">🏠 Back to Home</a>
+    </div>
+</section>
+{% endblock %}

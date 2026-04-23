@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description"
+        content="Student Performer Predictor — AI-powered academic performance prediction using machine learning." />
+    <title>{% block title %}Student Performer Predictor{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar" id="main-navbar" role="navigation" aria-label="Main navigation">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-brand" id="nav-brand">
+                <span class="brand-icon">🎓</span>
+                <span class="brand-text">StudentPredictor<span class="brand-accent">AI</span></span>
+            </a>
+
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+
+            <ul class="nav-links" id="nav-links" role="menubar">
+                <li role="none"><a href="{{ url_for('index') }}"
+                        class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" id="nav-home"
+                        role="menuitem">🏠 Home</a></li>
+                <li role="none"><a href="{{ url_for('dashboard') }}"
+                        class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" id="nav-dashboard"
+                        role="menuitem">📊 Dashboard</a></li>
+                <li role="none"><a href="{{ url_for('about_contact') }}"
+                        class="nav-link {% if request.endpoint == 'about_contact' %}active{% endif %}" id="nav-about"
+                        role="menuitem">👤 About</a></li>
+                <li role="none"><a href="{{ url_for('about_contact') }}#contact"
+                        class="nav-link {% if request.endpoint == 'about_contact' %}active{% endif %}" id="nav-contact"
+                        role="menuitem">✉️ Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="flash-container" id="flash-container" aria-live="polite">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" role="alert">
+            <span class="flash-icon">{% if category == 'danger' %}⚠️{% else %}✅{% endif %}</span>
+            <span class="flash-text">{{ message }}</span>
+            <button class="flash-close" onclick="this.parentElement.remove()" aria-label="Dismiss">✕</button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Page Content -->
+    <main class="main-content" id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" id="main-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <!-- Brand Column -->
+                <div class="footer-brand">
+                    <div class="brand-text">
+                        <span class="brand-icon">🎓</span>
+                        StudentPredictor<span class="brand-accent">AI</span>
+                    </div>
+                    <p class="footer-tagline">
+                        Advanced ML-powered academic performance prediction systems designed for the future of education.
+                    </p>
+                </div>
+
+                <!-- Navigation Column -->
+                <nav class="footer-links" aria-label="Footer Navigation">
+                    <span class="footer-section-title">Navigation</span>
+                    <a href="{{ url_for('index') }}" class="footer-link">🏠 Home</a>
+                    <a href="{{ url_for('dashboard') }}" class="footer-link">📊 Dashboard</a>
+                    <a href="{{ url_for('about_contact') }}" class="footer-link">👤 About</a>
+                </nav>
+
+                <!-- Connect Column -->
+                <div class="footer-links">
+                    <span class="footer-section-title">Connect</span>
+                    <a href="https://github.com/Washim-8" class="footer-link" target="_blank">💻 GitHub</a>
+                    <a href="https://www.linkedin.com/in/washim-shaikh-349868281/" class="footer-link" target="_blank">🔗 LinkedIn</a>
+                    <a href="mailto:washimshaikh33@gmail.com" class="footer-link">✉️ Contact</a>
+                </div>
+
+                <!-- Technology Column -->
+                <div class="footer-tech">
+                    <span class="footer-section-title">Built With</span>
+                    <div class="tech-badges">
+                        <span class="tech-chip">Flask</span>
+                        <span class="tech-chip">scikit-learn</span>
+                        <span class="tech-chip">Pandas</span>
+                        <span class="tech-chip">Chart.js</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="footer-copyright" id="footer-copyright">
+                    © 2026 Student Performer Predictor — Built with <span class="heart-icon">❤️</span> using Machine Learning
+                </div>
+                <div class="footer-meta">
+                    Designed for Excellence
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}500 Server Error — StudentPredictorAI{% endblock %}
+{% block content %}
+<section class="error-section" id="error-section-500">
+    <div class="container error-container">
+        <div class="error-code" id="error-code-500">500</div>
+        <h1 class="error-title">Internal Server Error</h1>
+        <p class="error-text">Something went wrong on our end. Please try again later.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-predict" id="error-500-home-btn">🏠 Back to Home</a>
+    </div>
+</section>
+{% endblock %}
