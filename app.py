@@ -6,7 +6,7 @@ import pandas as pd
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
 
 app = Flask(__name__)
-app.secret_key = "spp_secret_key_2024"
+app.secret_key = os.environ.get("SECRET_KEY", "spp_secret_key_2024_fallback")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model", "trained_model.pkl")
@@ -239,5 +239,15 @@ def server_error(e):
     return render_template("500.html"), 500
 
 
+@app.route("/healthz")
+def health_check():
+    model_ok = os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH) and os.path.exists(ENCODER_PATH)
+    status = "ok" if model_ok else "training"
+    code = 200 if model_ok else 503
+    return jsonify({"status": status, "model_loaded": model_ok, "service": "student-performer-predictor"}), code
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_ENV") != "production"
+    app.run(host="0.0.0.0", port=port, debug=debug)

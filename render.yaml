@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: student-performer-predictor
+    env: python
+    region: oregon
+    plan: free
+    rootDir: .
+    buildCommand: "pip install -r requirements.txt && python model/train.py"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    healthCheckPath: /healthz
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
