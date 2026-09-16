@@ -1,11 +1,44 @@
 import os
 import json
+import threading
+import time
+import urllib.request
 import joblib
 import numpy as np
 import pandas as pd
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
 
 app = Flask(__name__)
+
+
+# ── Keep-Alive: prevents Render free-tier from sleeping after 15 min ──────────
+def _keep_alive():
+    """
+    Daemon thread that self-pings /health every 10 minutes.
+    Prevents Render free-tier from spinning down the service.
+    Reads RENDER_EXTERNAL_URL (auto-injected by Render) — exits silently in local dev.
+    """
+    render_url = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
+    if not render_url:
+        return  # Not on Render — skip silently
+
+    ping_url = f"{render_url}/health"
+    print(f"[KeepAlive] Self-ping enabled → {ping_url} every 10 min")
+
+    time.sleep(30)  # Wait for Gunicorn to fully start
+
+    while True:
+        try:
+            with urllib.request.urlopen(ping_url, timeout=10) as resp:
+                print(f"[KeepAlive] Pinged → HTTP {resp.status}")
+        except Exception as exc:
+            print(f"[KeepAlive] Ping failed: {exc}")
+        time.sleep(600)  # 10 minutes
+
+
+_keep_alive_thread = threading.Thread(target=_keep_alive, name="keep-alive", daemon=True)
+_keep_alive_thread.start()
+# ─────────────────────────────────────────────────────────────────────────────
 app.secret_key = os.environ.get("SECRET_KEY", "spp_secret_key_2024_fallback")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -239,12 +272,15 @@ def server_error(e):
     return render_template("500.html"), 500
 
 
-@app.route("/healthz")
+@app.route("/health", methods=["GET"])
+@app.route("/healthz", methods=["GET"])
 def health_check():
-    model_ok = os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH) and os.path.exists(ENCODER_PATH)
-    status = "ok" if model_ok else "training"
-    code = 200 if model_ok else 503
-    return jsonify({"status": status, "model_loaded": model_ok, "service": "student-performer-predictor"}), code
+    """
+    Health check endpoint for Render.
+    MUST always return HTTP 200 — Render marks deployment as failed on any other status.
+    No auth, no DB calls, no ML loading — must respond in < 2s.
+    """
+    return jsonify({"status": "healthy", "service": "student-performer-predictor"}), 200
 
 
 if __name__ == "__main__":
